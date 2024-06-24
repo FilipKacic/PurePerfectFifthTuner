@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PurePerfect5thTuner</string>
+    <string name="frequency_placeholder">%1$.2f Hz</string>
 </resources>
