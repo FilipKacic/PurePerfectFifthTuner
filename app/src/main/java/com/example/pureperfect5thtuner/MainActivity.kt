@@ -1,25 +1,22 @@
 package com.example.pureperfect5thtuner
 
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.REQUEST_RECORD_AUDIO_PERMISSION
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.checkAudioRecordPermission
-import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.requestAudioRecordPermission
+import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.requestRecordPermission
+import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.showAudioRecordPermissionDeniedDialog
+import com.example.pureperfect5thtuner.UserInterfaceHelper.updateFrequency
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("MayTag: MainActivity", "Heaveno World!")
+        Log.d("MyTag: MainActivity", "Heaveno World!")
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
@@ -29,22 +26,16 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Check permission status
         if (checkAudioRecordPermission(this)) {
-            // Permission is already granted
             Toast.makeText(this, "Permission to record audio is GRANTED!", Toast.LENGTH_SHORT).show()
+
+
         } else {
-            // Request permission
-            requestAudioRecordPermission(this)
+            requestRecordPermission(this) // onRequestPermissionsResult
         }
 
-        var frequencyValue = 432.0
-        updateFrequency(frequencyValue)
-    }
-
-    override fun onResume() {
-        Log.d("MayTag: MainActivity", "God Bless!")
-        super.onResume()
+        var frequencyValue = 0.0
+        updateFrequency(this, findViewById(R.id.textViewFrequency), frequencyValue)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -57,43 +48,24 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     // Permission denied
                     // Toast.makeText(this, "Permission to record audio is DENIED!", Toast.LENGTH_SHORT).show()
-                    showAudioRecordPermissionDeniedDialog()
+                    showAudioRecordPermissionDeniedDialog(this)
                 }
             }
         }
     }
 
-    private fun showAudioRecordPermissionDeniedDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Permission Denied")
-            .setMessage("Audio recording permission is required for this application. It can be granted in the SETTINGS.")
-            .setPositiveButton("Go to SETTINGS") { dialog, _ ->
-                openApplicationSettings()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Quit App") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-            }
-            .setCancelable(false)
-            .show()
+    override fun onStop() {
+        Log.d("MyTag: MainActivity", "Stopped!")
+        super.onStop()
     }
 
-    private fun openApplicationSettings() {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = Uri.fromParts("package", packageName, null)
-        intent.data = uri
-        startActivity(intent)
-    }
-
-    private fun updateFrequency(frequency: Double) {
-        val textViewFrequency = findViewById<TextView>(R.id.textViewFrequency)
-        val frequencyText = getString(R.string.frequency_placeholder, frequency)
-        textViewFrequency.text = frequencyText
+    override fun onResume() {
+        Log.d("MyTag: MainActivity", "Resumed!")
+        super.onResume()
     }
 
     override fun onDestroy() {
-        Log.d("MayTag: MainActivity", "God Bless!")
+        Log.d("MyTag: MainActivity", "Godspeed!")
         super.onDestroy()
     }
 }
