@@ -17,50 +17,59 @@ object AudioRecorder {
         AudioFormat.CHANNEL_IN_MONO,
         AudioFormat.ENCODING_PCM_16BIT
     )
-
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
     private val audioData = ShortArray(BUFFER_SIZE)
 
     fun startRecording(context: Context) {
-        if (audioRecord == null) {
-            if (ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.RECORD_AUDIO
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // Permission is not granted
-                return
-            }
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                BUFFER_SIZE
-            )
-        }
-
-        audioRecord?.startRecording()
-        isRecording = true
-
-        Thread {
-            while (isRecording) {
-                val readSize = audioRecord?.read(audioData, 0, BUFFER_SIZE)
-                if (readSize != null && readSize > 0) {
-                    processAudioData(audioData, readSize)
+        try {
+            if (audioRecord == null) {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    throw SecurityException("Permission to record audio is not granted.")
+                }
+                audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    BUFFER_SIZE
+                )
+                if (audioRecord!!.state != AudioRecord.STATE_INITIALIZED) {
+                    throw RuntimeException("Failed to initialize AudioRecord.")
                 }
             }
-        }.start()
 
-        Log.d("MyTag: AudioRecorder", "Recording STARTED.")
+            audioRecord?.startRecording()
+            isRecording = true
+
+            Thread {
+                while (isRecording) {
+                    val readSizeInBytes = audioRecord?.read(audioData, 0, BUFFER_SIZE)
+                    val readSize = readSizeInBytes?.div(2) ?: 0 // Convert bytes to shorts (assuming 16-bit encoding)
+                    if (readSize > 0) {
+                        processAudioData(audioData, readSize)
+                    } else {
+                        Log.e("MyTag: AudioRecorder", "Error reading audio data.")
+                    }
+                }
+            }.start()
+        } catch (e: Exception) {
+            Log.e("MyTag: AudioRecorder", "${e.message}")
+        }
     }
 
     fun stopRecording() {
-        isRecording = false
-        audioRecord?.stop()
-        audioRecord?.release()
-        audioRecord = null
-        Log.d("MyTag: AudioRecorder", "Recording STOPPED.")
+        try {
+            isRecording = false
+            audioRecord?.stop()
+            audioRecord?.release()
+            audioRecord = null
+        } catch (e: Exception) {
+            Log.e("MyTag: AudioRecorder", "${e.message}")
+        }
     }
 }

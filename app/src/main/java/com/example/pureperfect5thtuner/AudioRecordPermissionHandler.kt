@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import com.example.pureperfect5thtuner.KingOfConstants.REQUEST_RECORD_AUDIO_PERMISSION
 
 object AudioRecordPermissionHandler {
+
     fun checkAudioRecordPermission(activity: Activity): Boolean {
         return ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }

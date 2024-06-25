@@ -4,7 +4,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -23,6 +22,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
         textViewFrequency = findViewById(R.id.textViewFrequency)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -32,13 +32,11 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         }
 
         if (checkAudioRecordPermission(this)) {
-            Toast.makeText(this, "Permission to record audio is GRANTED!", Toast.LENGTH_SHORT).show()
             AudioRecorder.startRecording(this)
         } else {
-            requestRecordPermission(this) // onRequestPermissionsResult
+            requestRecordPermission(this)
         }
 
-        // Register the listener for frequency updates
         AudioProcessor.registerListener(this)
     }
 
@@ -50,16 +48,11 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            REQUEST_RECORD_AUDIO_PERMISSION -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // Permission granted
-                    Toast.makeText(this, "Permission to record audio is GRANTED!", Toast.LENGTH_SHORT).show()
-                    AudioRecorder.startRecording(this)
-                } else {
-                    // Permission denied
-                    showAudioRecordPermissionDeniedDialog(this)
-                }
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                AudioRecorder.startRecording(this)
+            } else {
+                showAudioRecordPermissionDeniedDialog(this)
             }
         }
     }
@@ -78,7 +71,6 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
 
     override fun onDestroy() {
         Log.d("MyTag: MainActivity", "Godspeed!")
-        // Unregister the listener to avoid memory leaks
         AudioProcessor.unregisterListener(this)
         AudioRecorder.stopRecording()
         super.onDestroy()
