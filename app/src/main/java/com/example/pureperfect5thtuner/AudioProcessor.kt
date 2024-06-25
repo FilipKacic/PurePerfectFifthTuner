@@ -1,19 +1,14 @@
 package com.example.pureperfect5thtuner
 
 import android.util.Log
+import com.example.pureperfect5thtuner.KingOfConstants.MIN_FFT_SIZE
 import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-interface FrequencyUpdateListener {
-    fun onFrequencyUpdate(frequency: Double)
-}
-
 object AudioProcessor {
-    private const val MIN_FFT_SIZE = 256 // Minimum FFT size for processing
-
     // List of listeners to notify frequency updates
     private val listeners = mutableListOf<FrequencyUpdateListener>()
 

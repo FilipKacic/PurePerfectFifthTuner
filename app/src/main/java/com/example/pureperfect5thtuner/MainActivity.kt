@@ -9,10 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.REQUEST_RECORD_AUDIO_PERMISSION
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.checkAudioRecordPermission
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.requestRecordPermission
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.showAudioRecordPermissionDeniedDialog
+import com.example.pureperfect5thtuner.KingOfConstants.REQUEST_RECORD_AUDIO_PERMISSION
 import com.example.pureperfect5thtuner.UserInterfaceKing.updateFrequency
 
 class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
