@@ -9,9 +9,9 @@ import android.media.MediaRecorder
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.example.pureperfect5thtuner.AudioProcessor.processAudioData
+import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
 
 object AudioRecorder {
-    private const val SAMPLE_RATE = 44100
     private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
         SAMPLE_RATE,
         AudioFormat.CHANNEL_IN_MONO,
@@ -49,6 +49,7 @@ object AudioRecorder {
                 val readSize = audioRecord?.read(audioData, 0, BUFFER_SIZE)
                 if (readSize != null && readSize > 0) {
                     processAudioData(audioData, readSize)
+
                 }
             }
         }.start()

@@ -1,6 +1,7 @@
 package com.example.pureperfect5thtuner
 
 import android.util.Log
+import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -23,13 +24,29 @@ object AudioProcessor {
         val imaginary = DoubleArray(fftSize)
         fft(real, imaginary, fftSize)
 
-        // Example: Calculate magnitude spectrum
+        // Calculate magnitude spectrum
         val magnitude = DoubleArray(fftSize / 2)
         for (i in 0 until fftSize / 2) {
             magnitude[i] = sqrt(real[i] * real[i] + imaginary[i] * imaginary[i])
         }
 
-        // Log the processed data for debugging (optional)
+        // Find the index with the maximum magnitude (dominant frequency)
+        var maxIndex = 0
+        var maxMagnitude = magnitude[0]
+        for (i in 1 until fftSize / 2) {
+            if (magnitude[i] > maxMagnitude) {
+                maxMagnitude = magnitude[i]
+                maxIndex = i
+            }
+        }
+
+        // Calculate dominant frequency in Hz
+        val dominantFrequency = maxIndex * SAMPLE_RATE / fftSize.toDouble()
+
+        // Log the dominant frequency
+        Log.d("MyTag: AudioProcessor", "Dominant frequency: $dominantFrequency Hz")
+
+        // Optionally, log the processed FFT magnitude spectrum
         Log.d("MyTag: AudioProcessor", "Processed FFT magnitude: ${magnitude.joinToString(", ")}")
     }
 
