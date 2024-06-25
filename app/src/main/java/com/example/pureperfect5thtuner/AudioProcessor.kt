@@ -7,8 +7,27 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+interface FrequencyUpdateListener {
+    fun onFrequencyUpdate(frequency: Double)
+}
+
 object AudioProcessor {
     private const val MIN_FFT_SIZE = 256 // Minimum FFT size for processing
+
+    // List of listeners to notify frequency updates
+    private val listeners = mutableListOf<FrequencyUpdateListener>()
+
+    fun registerListener(listener: FrequencyUpdateListener) {
+        listeners.add(listener)
+    }
+
+    fun unregisterListener(listener: FrequencyUpdateListener) {
+        listeners.remove(listener)
+    }
+
+    private fun notifyFrequencyUpdate(frequency: Double) {
+        listeners.forEach { it.onFrequencyUpdate(frequency) }
+    }
 
     fun processAudioData(audioData: ShortArray, readSize: Int) {
         Log.d("MyTag: AudioProcessor", "Processing audio data of size: $readSize")
@@ -43,11 +62,11 @@ object AudioProcessor {
         // Calculate dominant frequency in Hz
         val dominantFrequency = maxIndex * SAMPLE_RATE / fftSize.toDouble()
 
+        // Notify listeners of the updated frequency
+        notifyFrequencyUpdate(dominantFrequency)
+
         // Log the dominant frequency
         Log.d("MyTag: AudioProcessor", "Dominant frequency: $dominantFrequency Hz")
-
-        // Optionally, log the processed FFT magnitude spectrum
-        Log.d("MyTag: AudioProcessor", "Processed FFT magnitude: ${magnitude.joinToString(", ")}")
     }
 
     private fun determineFFTSize(inputSize: Int): Int {

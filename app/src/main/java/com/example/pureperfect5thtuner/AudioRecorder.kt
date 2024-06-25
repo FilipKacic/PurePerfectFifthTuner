@@ -49,7 +49,6 @@ object AudioRecorder {
                 val readSize = audioRecord?.read(audioData, 0, BUFFER_SIZE)
                 if (readSize != null && readSize > 0) {
                     processAudioData(audioData, readSize)
-
                 }
             }
         }.start()

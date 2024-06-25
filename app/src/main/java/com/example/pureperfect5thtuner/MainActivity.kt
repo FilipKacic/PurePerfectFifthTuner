@@ -3,6 +3,7 @@ package com.example.pureperfect5thtuner
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,14 +13,18 @@ import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.REQUEST_RECO
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.checkAudioRecordPermission
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.requestRecordPermission
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.showAudioRecordPermissionDeniedDialog
-import com.example.pureperfect5thtuner.UserInterfaceHelper.updateFrequency
+import com.example.pureperfect5thtuner.UserInterfaceKing.updateFrequency
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
+    private lateinit var textViewFrequency: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d("MyTag: MainActivity", "Heaveno World!")
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        textViewFrequency = findViewById(R.id.textViewFrequency)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -33,8 +38,14 @@ class MainActivity : AppCompatActivity() {
             requestRecordPermission(this) // onRequestPermissionsResult
         }
 
-        var frequencyValue = 0.0
-        updateFrequency(this, findViewById(R.id.textViewFrequency), frequencyValue)
+        // Register the listener for frequency updates
+        AudioProcessor.registerListener(this)
+    }
+
+    override fun onFrequencyUpdate(frequency: Double) {
+        runOnUiThread {
+            updateFrequency(this@MainActivity, textViewFrequency, frequency)
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -44,9 +55,9 @@ class MainActivity : AppCompatActivity() {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     // Permission granted
                     Toast.makeText(this, "Permission to record audio is GRANTED!", Toast.LENGTH_SHORT).show()
+                    AudioRecorder.startRecording(this)
                 } else {
                     // Permission denied
-                    // Toast.makeText(this, "Permission to record audio is DENIED!", Toast.LENGTH_SHORT).show()
                     showAudioRecordPermissionDeniedDialog(this)
                 }
             }
@@ -67,6 +78,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         Log.d("MyTag: MainActivity", "Godspeed!")
+        // Unregister the listener to avoid memory leaks
+        AudioProcessor.unregisterListener(this)
         AudioRecorder.stopRecording()
         super.onDestroy()
     }
