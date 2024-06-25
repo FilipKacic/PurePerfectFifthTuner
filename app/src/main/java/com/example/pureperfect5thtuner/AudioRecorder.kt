@@ -8,6 +8,7 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.pureperfect5thtuner.AudioProcessor.processAudioData
 
 object AudioRecorder {
     private const val SAMPLE_RATE = 44100
@@ -61,10 +62,5 @@ object AudioRecorder {
         audioRecord?.release()
         audioRecord = null
         Log.d("MyTag: AudioRecorder", "Recording STOPPED.")
-    }
-
-    private fun processAudioData(audioData: ShortArray, readSize: Int) {
-        // Implement your FFT processing algorithm here
-        // Log.d("MyTag: AudioRecorder", "Processing audio data of size: $readSize")
     }
 }
