@@ -28,8 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         if (checkAudioRecordPermission(this)) {
             Toast.makeText(this, "Permission to record audio is GRANTED!", Toast.LENGTH_SHORT).show()
-
-
+            AudioRecorder.startRecording(this)
         } else {
             requestRecordPermission(this) // onRequestPermissionsResult
         }
@@ -56,16 +55,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         Log.d("MyTag: MainActivity", "Stopped!")
+        AudioRecorder.stopRecording()
         super.onStop()
     }
 
     override fun onResume() {
         Log.d("MyTag: MainActivity", "Resumed!")
+        AudioRecorder.startRecording(this)
         super.onResume()
     }
 
     override fun onDestroy() {
         Log.d("MyTag: MainActivity", "Godspeed!")
+        AudioRecorder.stopRecording()
         super.onDestroy()
     }
 }
