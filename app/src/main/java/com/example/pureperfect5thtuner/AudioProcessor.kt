@@ -7,7 +7,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-
 object AudioProcessor {
     private val listeners = mutableListOf<FrequencyUpdateListener>()
 
@@ -30,6 +29,9 @@ object AudioProcessor {
 
         val data = audioData.map { it.toDouble() }.toDoubleArray()
 
+        applyHammingWindow(data)
+        applyHighPassFilter(audioData, 2187.0)
+
         val real = data.copyOf(fftSize)
         val imaginary = DoubleArray(fftSize)
         fft(real, imaginary, fftSize)
@@ -39,22 +41,56 @@ object AudioProcessor {
             magnitude[i] = sqrt(real[i] * real[i] + imaginary[i] * imaginary[i])
         }
 
-        var maxIndex = 0
-        var maxMagnitude = magnitude[0]
-        for (i in 1 until fftSize / 2) {
-            if (magnitude[i] > maxMagnitude) {
-                maxMagnitude = magnitude[i]
-                maxIndex = i
-            }
-        }
+        val maxIndex = findPeakIndex(magnitude)
+        val interpolatedPeak = interpolatePeak(magnitude, maxIndex)
 
-        val dominantFrequency = maxIndex * SAMPLE_RATE / fftSize.toDouble()
+        val dominantFrequency = interpolatedPeak * SAMPLE_RATE / fftSize.toDouble()
 
         notifyFrequencyUpdate(dominantFrequency)
 
         Log.d("MyTag: AudioProcessor", "$dominantFrequency Hz")
     }
 
+    private fun findPeakIndex(magnitude: DoubleArray): Int {
+        var maxIndex = 0
+        var maxMagnitude = magnitude[0]
+        for (i in 1 until magnitude.size) {
+            if (magnitude[i] > maxMagnitude) {
+                maxMagnitude = magnitude[i]
+                maxIndex = i
+            }
+        }
+        return maxIndex
+    }
+
+    private fun interpolatePeak(magnitude: DoubleArray, peakIndex: Int): Double {
+        val prev = magnitude[peakIndex - 1]
+        val curr = magnitude[peakIndex]
+        val next = magnitude[peakIndex + 1]
+
+        val interpolatedIndex = peakIndex + 0.5 * ((prev - next) / (prev - 2 * curr + next))
+
+        return interpolatedIndex
+    }
+
+    private fun applyHammingWindow(data: DoubleArray) {
+        val n = data.size
+        for (i in 0 until n) {
+            val multiplier = 0.54 - 0.46 * cos(2 * PI * i / (n - 1))
+            data[i] *= multiplier
+        }
+    }
+
+    private fun applyHighPassFilter(audioData: ShortArray, cutoffFrequency: Double) {
+        val alpha = (2 * PI * cutoffFrequency / SAMPLE_RATE).toFloat()
+        var lastFilteredValue = 0.0
+
+        for (i in audioData.indices) {
+            val newValue = (1 - alpha) * lastFilteredValue + alpha * audioData[i]
+            lastFilteredValue = newValue
+            audioData[i] = newValue.toInt().toShort()
+        }
+    }
 
     private fun determineFFTSize(inputSize: Int): Int {
         var fftSize = MIN_FFT_SIZE

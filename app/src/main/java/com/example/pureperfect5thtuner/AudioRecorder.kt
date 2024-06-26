@@ -55,6 +55,7 @@ object AudioRecorder {
                     } else {
                         Log.e("MyTag: AudioRecorder", "Error reading audio data.")
                     }
+                    Thread.sleep(500)
                 }
             }.start()
         } catch (e: Exception) {
