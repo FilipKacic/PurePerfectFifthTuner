@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.example.pureperfect5thtuner.AudioProcessor.processAudioData
 import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
+import com.example.pureperfect5thtuner.KingOfConstants.THREAD_DELAY_IN_MS
 
 object AudioRecorder {
     private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
@@ -55,7 +56,7 @@ object AudioRecorder {
                     } else {
                         Log.e("MyTag: AudioRecorder", "Error reading audio data.")
                     }
-                    Thread.sleep(500)
+                    Thread.sleep(THREAD_DELAY_IN_MS.toLong())
                 }
             }.start()
         } catch (e: Exception) {

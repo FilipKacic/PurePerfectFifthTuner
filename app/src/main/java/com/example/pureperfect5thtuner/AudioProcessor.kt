@@ -33,7 +33,7 @@ object AudioProcessor {
             val data = audioData.map { it.toDouble() }.toDoubleArray()
 
             applyHammingWindow(data)
-            applyHighPassFilter(data) // Using data instead of audioData
+            applyHighPassFilter(data)
 
             val real = data.copyOf(fftSize)
             val imaginary = DoubleArray(fftSize)
