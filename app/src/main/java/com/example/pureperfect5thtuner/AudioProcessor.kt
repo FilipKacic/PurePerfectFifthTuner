@@ -1,12 +1,14 @@
 package com.example.pureperfect5thtuner
 
 import android.util.Log
+import com.example.pureperfect5thtuner.KingOfConstants.CUT_OFF_FREQUENCY
 import com.example.pureperfect5thtuner.KingOfConstants.MIN_FFT_SIZE
 import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+
 object AudioProcessor {
     private val listeners = mutableListOf<FrequencyUpdateListener>()
 
@@ -23,32 +25,36 @@ object AudioProcessor {
     }
 
     fun processAudioData(audioData: ShortArray, readSizeInBytes: Int) {
-        val readSize = readSizeInBytes / 2
+        try {
+            val readSize = readSizeInBytes / 2
 
-        val fftSize = determineFFTSize(readSize)
+            val fftSize = determineFFTSize(readSize)
 
-        val data = audioData.map { it.toDouble() }.toDoubleArray()
+            val data = audioData.map { it.toDouble() }.toDoubleArray()
 
-        applyHammingWindow(data)
-        applyHighPassFilter(audioData, 2187.0)
+            applyHammingWindow(data)
+            applyHighPassFilter(data) // Using data instead of audioData
 
-        val real = data.copyOf(fftSize)
-        val imaginary = DoubleArray(fftSize)
-        fft(real, imaginary, fftSize)
+            val real = data.copyOf(fftSize)
+            val imaginary = DoubleArray(fftSize)
+            fft(real, imaginary, fftSize)
 
-        val magnitude = DoubleArray(fftSize / 2)
-        for (i in 0 until fftSize / 2) {
-            magnitude[i] = sqrt(real[i] * real[i] + imaginary[i] * imaginary[i])
+            val magnitude = DoubleArray(fftSize / 2)
+            for (i in 0 until fftSize / 2) {
+                magnitude[i] = sqrt(real[i] * real[i] + imaginary[i] * imaginary[i])
+            }
+
+            val maxIndex = findPeakIndex(magnitude)
+            val interpolatedPeak = interpolatePeak(magnitude, maxIndex)
+
+            val dominantFrequency = interpolatedPeak * SAMPLE_RATE / fftSize.toDouble()
+
+            notifyFrequencyUpdate(dominantFrequency)
+
+            Log.d("MyTag: AudioProcessor", "$dominantFrequency Hz")
+        } catch (e: Exception) {
+            Log.e("MyTag: AudioProcessor", "Error processing audio data", e)
         }
-
-        val maxIndex = findPeakIndex(magnitude)
-        val interpolatedPeak = interpolatePeak(magnitude, maxIndex)
-
-        val dominantFrequency = interpolatedPeak * SAMPLE_RATE / fftSize.toDouble()
-
-        notifyFrequencyUpdate(dominantFrequency)
-
-        Log.d("MyTag: AudioProcessor", "$dominantFrequency Hz")
     }
 
     private fun findPeakIndex(magnitude: DoubleArray): Int {
@@ -64,13 +70,16 @@ object AudioProcessor {
     }
 
     private fun interpolatePeak(magnitude: DoubleArray, peakIndex: Int): Double {
-        val prev = magnitude[peakIndex - 1]
-        val curr = magnitude[peakIndex]
-        val next = magnitude[peakIndex + 1]
+        return if (peakIndex <= 0 || peakIndex >= magnitude.size - 1) {
+            peakIndex.toDouble()
+        } else {
+            val prev = magnitude[peakIndex - 1]
+            val curr = magnitude[peakIndex]
+            val next = magnitude[peakIndex + 1]
 
-        val interpolatedIndex = peakIndex + 0.5 * ((prev - next) / (prev - 2 * curr + next))
-
-        return interpolatedIndex
+            val interpolatedIndex = peakIndex + 0.5 * ((prev - next) / (prev - 2 * curr + next))
+            interpolatedIndex
+        }
     }
 
     private fun applyHammingWindow(data: DoubleArray) {
@@ -81,14 +90,14 @@ object AudioProcessor {
         }
     }
 
-    private fun applyHighPassFilter(audioData: ShortArray, cutoffFrequency: Double) {
-        val alpha = (2 * PI * cutoffFrequency / SAMPLE_RATE).toFloat()
+    private fun applyHighPassFilter(data: DoubleArray) {
+        val alpha = 2 * PI * CUT_OFF_FREQUENCY / SAMPLE_RATE
         var lastFilteredValue = 0.0
 
-        for (i in audioData.indices) {
-            val newValue = (1 - alpha) * lastFilteredValue + alpha * audioData[i]
+        for (i in data.indices) {
+            val newValue = (1 - alpha) * lastFilteredValue + alpha * data[i]
             lastFilteredValue = newValue
-            audioData[i] = newValue.toInt().toShort()
+            data[i] = newValue
         }
     }
 
