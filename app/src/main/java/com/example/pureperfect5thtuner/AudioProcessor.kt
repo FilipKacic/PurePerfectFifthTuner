@@ -51,7 +51,7 @@ object AudioProcessor {
 
             notifyFrequencyUpdate(dominantFrequency)
 
-            Log.d("MyTag: AudioProcessor", "$dominantFrequency Hz")
+            // Log.d("MyTag: AudioProcessor", "Precise frequency: $dominantFrequency Hz")
         } catch (e: Exception) {
             Log.e("MyTag: AudioProcessor", "Error processing audio data", e)
         }

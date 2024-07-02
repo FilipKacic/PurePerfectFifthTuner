@@ -12,16 +12,17 @@ import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.checkAudioRe
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.requestRecordPermission
 import com.example.pureperfect5thtuner.AudioRecordPermissionHandler.showAudioRecordPermissionDeniedDialog
 import com.example.pureperfect5thtuner.KingOfConstants.REQUEST_RECORD_AUDIO_PERMISSION
-import com.example.pureperfect5thtuner.UserInterfaceKing.updateFrequency
 
 class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
+
     private lateinit var textViewFrequency: TextView
+    private val lock = Any()
+    private var audioRecorderInitialized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("MyTag: MainActivity", "Heaveno World!")
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        enableEdgeToEdge()
 
         textViewFrequency = findViewById(R.id.textViewFrequency)
 
@@ -31,18 +32,34 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
             insets
         }
 
+        checkPermissionsAndStartRecording()
+        AudioProcessor.registerListener(this)
+    }
+
+    private fun checkPermissionsAndStartRecording() {
         if (checkAudioRecordPermission(this)) {
-            AudioRecorder.startRecording(this)
+            startAudioRecording()
         } else {
             requestRecordPermission(this)
         }
+    }
 
-        AudioProcessor.registerListener(this)
+    private fun startAudioRecording() {
+        synchronized(lock) {
+            if (!audioRecorderInitialized) {
+                AudioRecorder.startRecording(this)
+                audioRecorderInitialized = true
+            }
+        }
     }
 
     override fun onFrequencyUpdate(frequency: Double) {
         runOnUiThread {
-            updateFrequency(this@MainActivity, textViewFrequency, frequency)
+            synchronized(lock) {
+                val frequencyText = getString(R.string.frequency_placeholder, frequency)
+                textViewFrequency.text = frequencyText
+                Log.d("MyTag: MainActivity", frequencyText)
+            }
         }
     }
 
@@ -50,29 +67,39 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                AudioRecorder.startRecording(this)
+                startAudioRecording()
             } else {
                 showAudioRecordPermissionDeniedDialog(this)
             }
         }
     }
 
-    override fun onStop() {
-        Log.d("MyTag: MainActivity", "Stopped!")
-        AudioRecorder.stopRecording()
-        super.onStop()
+    override fun onResume() {
+        super.onResume()
+        Log.d("MyTag: MainActivity", "Resumed!")
+        startAudioRecording()
     }
 
-    override fun onResume() {
-        Log.d("MyTag: MainActivity", "Resumed!")
-        AudioRecorder.startRecording(this)
-        super.onResume()
+    override fun onStop() {
+        super.onStop()
+        Log.d("MyTag: MainActivity", "Stopped!")
+        // Ensure audio recording is stopped when the activity is stopped
+        stopRecording()
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         Log.d("MyTag: MainActivity", "Godspeed!")
         AudioProcessor.unregisterListener(this)
-        AudioRecorder.stopRecording()
-        super.onDestroy()
+        stopRecording()
+    }
+
+    private fun stopRecording() {
+        synchronized(lock) {
+            if (audioRecorderInitialized) {
+                AudioRecorder.stopRecording()
+                audioRecorderInitialized = false
+            }
+        }
     }
 }
