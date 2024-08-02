@@ -13,14 +13,17 @@ import com.example.pureperfect5thtuner.KingOfConstants.REQUEST_RECORD_AUDIO_PERM
 
 object AudioRecordPermissionHandler {
 
+    // Checks if the app has permission to record audio
     fun checkAudioRecordPermission(activity: Activity): Boolean {
         return ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
 
+    // Requests the record audio permission from the user
     fun requestRecordPermission(activity: Activity) {
         ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO_PERMISSION)
     }
 
+    // Shows a dialog informing the user that the permission was denied and provides options to go to settings or quit the app
     fun showAudioRecordPermissionDeniedDialog(activity: Activity) {
         AlertDialog.Builder(activity)
             .setTitle("Permission Denied")
@@ -37,6 +40,7 @@ object AudioRecordPermissionHandler {
             .show()
     }
 
+    // Opens the application's settings page to allow the user to manually grant permissions
     private fun openApplicationSettings(activity: Activity) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
         val uri = Uri.fromParts("package", activity.packageName, null)

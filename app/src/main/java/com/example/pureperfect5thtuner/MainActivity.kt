@@ -22,20 +22,28 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Enables edge-to-edge display
         enableEdgeToEdge()
 
+        // Initializes the TextView for displaying frequency
         textViewFrequency = findViewById(R.id.textViewFrequency)
 
+        // Adjusts padding to avoid overlap with system bars (status bar, navigation bar)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
+        // Checks permissions and starts audio recording if granted
         checkPermissionsAndStartRecording()
+
+        // Registers the current activity as a listener for frequency updates
         AudioProcessor.registerListener(this)
     }
 
+    // Checks if the app has permission to record audio; if not, requests it
     private fun checkPermissionsAndStartRecording() {
         if (checkAudioRecordPermission(this)) {
             startAudioRecording()
@@ -44,6 +52,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         }
     }
 
+    // Starts audio recording in a synchronized block to ensure thread safety
     private fun startAudioRecording() {
         synchronized(lock) {
             if (!audioRecorderInitialized) {
@@ -53,6 +62,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         }
     }
 
+    // Callback for when the frequency is updated, runs on the UI thread
     override fun onFrequencyUpdate(frequency: Double) {
         runOnUiThread {
             synchronized(lock) {
@@ -63,6 +73,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         }
     }
 
+    // Handles the result of the permission request
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
@@ -74,12 +85,14 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         }
     }
 
+    // Lifecycle callback: called when the activity is resumed
     override fun onResume() {
         super.onResume()
         Log.d("MyTag: MainActivity", "Resumed!")
         startAudioRecording()
     }
 
+    // Lifecycle callback: called when the activity is stopped
     override fun onStop() {
         super.onStop()
         Log.d("MyTag: MainActivity", "Stopped!")
@@ -87,6 +100,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         stopRecording()
     }
 
+    // Lifecycle callback: called when the activity is destroyed
     override fun onDestroy() {
         super.onDestroy()
         Log.d("MyTag: MainActivity", "Godspeed!")
@@ -94,6 +108,7 @@ class MainActivity : AppCompatActivity(), FrequencyUpdateListener {
         stopRecording()
     }
 
+    // Stops audio recording in a synchronized block to ensure thread safety
     private fun stopRecording() {
         synchronized(lock) {
             if (audioRecorderInitialized) {
