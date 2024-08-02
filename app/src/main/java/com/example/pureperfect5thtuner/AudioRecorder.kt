@@ -6,15 +6,13 @@ import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Process
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.example.pureperfect5thtuner.AudioProcessor.processAudioData
-import com.example.pureperfect5thtuner.KingOfConstants.SAMPLE_RATE
-import com.example.pureperfect5thtuner.KingOfConstants.THREAD_DELAY_IN_MS
 
 object AudioRecorder {
     private val BUFFER_SIZE = AudioRecord.getMinBufferSize(
-        SAMPLE_RATE,
+        KingOfConstants.SAMPLE_RATE,
         AudioFormat.CHANNEL_IN_MONO,
         AudioFormat.ENCODING_PCM_16BIT
     )
@@ -34,7 +32,7 @@ object AudioRecorder {
                 }
                 audioRecord = AudioRecord(
                     MediaRecorder.AudioSource.MIC,
-                    SAMPLE_RATE,
+                    KingOfConstants.SAMPLE_RATE,
                     AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT,
                     BUFFER_SIZE
@@ -48,15 +46,16 @@ object AudioRecorder {
             isRecording = true
 
             Thread {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
                 while (isRecording) {
                     val readSizeInBytes = audioRecord?.read(audioData, 0, BUFFER_SIZE)
-                    val readSize = readSizeInBytes?.div(2) ?: 0 // Convert bytes to shorts (assuming 16-bit encoding)
+                    val readSize = readSizeInBytes?.div(2) ?: 0 // Convert bytes to shorts
                     if (readSize > 0) {
-                        processAudioData(audioData, readSize)
+                        AudioProcessor.processAudioData(audioData, readSize)
                     } else {
                         Log.e("MyTag: AudioRecorder", "Error reading audio data.")
                     }
-                    Thread.sleep(THREAD_DELAY_IN_MS.toLong())
+                    Thread.sleep(KingOfConstants.THREAD_DELAY_IN_MS.toLong())
                 }
             }.start()
         } catch (e: Exception) {
